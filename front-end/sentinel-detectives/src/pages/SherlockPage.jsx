@@ -11,6 +11,8 @@ const SherlockPage = () => {
   const [audioURL, setAudioURL] = useState(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [showRecordingPanel, setShowRecordingPanel] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [trustScore, setTrustScore] = useState(0);
   
   const timerRef = useRef(null);
 
@@ -105,44 +107,100 @@ const SherlockPage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!textInput) return;
     
     setIsAnalyzing(true);
+    setErrorMessage('');
     
-    // Simulate analysis time
-    setTimeout(() => {
-      // Sample fact check results for demonstration
-      setFactChecks([
-        {
-          claim: "The Eiffel Tower is 300 meters tall",
-          assessment: "ACCURATE",
-          explanation: "The Eiffel Tower's exact height is 300 meters (984 feet) from the ground to the tip, not including antennas.",
-          type: "true"
+    try {
+      // Call the fact checking API (server2.py)
+      const response = await fetch('http://localhost:5002/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          claim: "Water boils at 100°C under all conditions",
-          assessment: "MISLEADING",
-          explanation: "Water boils at 100°C specifically at sea level under standard atmospheric pressure. The boiling point changes with altitude and pressure.",
-          type: "partial"
-        },
-        {
-          claim: "The Great Wall of China is visible from space with the naked eye",
-          assessment: "FALSE",
-          explanation: "Contrary to popular belief, the Great Wall of China cannot be seen from space with the naked eye. It's too narrow to be distinguished from its surroundings.",
-          type: "false"
-        }
-      ]);
+        body: JSON.stringify({ text: textInput }),
+      });
       
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to analyze text');
+      }
+      
+      const data = await response.json();
+      
+      // Calculate trust score
+      if (data.analysis_summary && typeof data.analysis_summary.trust_score === 'number') {
+        setTrustScore(data.analysis_summary.trust_score);
+      } else {
+        // Fallback if trust score isn't provided
+        const trueCount = data.verified_claims.filter(c => c.result === 'TRUE').length;
+        const totalClaims = data.verified_claims.length || 1;
+        const calculatedScore = ((trueCount / totalClaims) * 10).toFixed(1);
+        setTrustScore(calculatedScore);
+      }
+      
+      // Process the claims for the frontend format
+      const processedChecks = data.verified_claims.map(item => ({
+        claim: item.claim,
+        assessment: mapResultToAssessment(item.result),
+        explanation: item.additional_context || generateExplanation(item.claim, item.result),
+        type: mapResultToType(item.result),
+        detailed_analysis: item.detailed_analysis || "",
+        sourceNames: item.source_names || [],
+        sourceLinks: item.source_links || []
+      }));
+      
+      setFactChecks(processedChecks);
       setIsAnalyzing(false);
       setShowResults(true);
-    }, 3000);
+    } catch (error) {
+      console.error('Error analyzing text:', error);
+      setErrorMessage(error.message);
+      setIsAnalyzing(false);
+    }
+  };
+  
+  // Map backend result to frontend assessment terminology
+  const mapResultToAssessment = (result) => {
+    switch (result) {
+      case 'TRUE': return 'ACCURATE';
+      case 'FALSE': return 'FALSE';
+      case 'UNVERIFIED': return 'UNVERIFIED';
+      default: return 'UNVERIFIED';
+    }
+  };
+  
+  // Map backend result to frontend type for styling
+  const mapResultToType = (result) => {
+    switch (result) {
+      case 'TRUE': return 'true';
+      case 'FALSE': return 'false';
+      case 'UNVERIFIED': return 'partial';
+      default: return 'partial';
+    }
+  };
+  
+  // Generate Sherlock-themed explanation for claims
+  const generateExplanation = (claim, result) => {
+    switch (result) {
+      case 'TRUE':
+        return `Elementary, my dear Watson! This claim holds up under scrutiny. The evidence clearly supports this statement.`;
+      case 'FALSE':
+        return `Upon closer investigation, I've found this claim to be demonstrably false. The facts tell a different story entirely.`;
+      case 'UNVERIFIED':
+        return `The game is afoot! While intriguing, this claim requires more evidence before a definitive conclusion can be drawn.`;
+      default:
+        return 'This matter requires further investigation.';
+    }
   };
   
   const resetForm = () => {
     setShowResults(false);
     setFactChecks([]);
+    setErrorMessage('');
   };
 
   // Example statements for quick selection
@@ -233,6 +291,16 @@ const SherlockPage = () => {
                 </div>
                 
                 <div className="p-6">
+                  {errorMessage && (
+                    <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-md p-3 flex items-start gap-2">
+                      <X size={18} className="mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h3 className="font-medium">Error</h3>
+                        <p className="text-sm">{errorMessage}</p>
+                      </div>
+                    </div>
+                  )}
+                
                   <div className="mb-4 flex justify-between">
                     <button 
                       onClick={toggleRecordingPanel}
@@ -489,6 +557,32 @@ const SherlockPage = () => {
                     </div>
                   </div>
                   
+                  {/* Trust Score Section */}
+                  <div className="mb-6 flex flex-col items-center">
+                    <div className="text-center mb-2">
+                      <span className="text-xs font-semibold text-gray-500">TRUST SCORE</span>
+                      <div className="flex items-center justify-center gap-2 mt-1">
+                        <div className="text-4xl font-bold text-indigo-600">{trustScore}</div>
+                        <div className="text-gray-400 font-medium">/10</div>
+                      </div>
+                    </div>
+                    
+                    <div className="w-full max-w-sm bg-gray-200 rounded-full h-3 mt-2">
+                      <div 
+                        className="bg-indigo-600 h-3 rounded-full" 
+                        style={{ width: `${Math.min(trustScore * 10, 100)}%` }}
+                      ></div>
+                    </div>
+                    
+                    <p className="mt-3 text-sm text-gray-600 text-center">
+                      {trustScore > 7 
+                        ? "This content contains mostly factual and accurate information. Sherlock deems it trustworthy." 
+                        : trustScore > 4 
+                        ? "This content contains some factual information but also includes misleading claims or unverified statements." 
+                        : "This content contains numerous inaccuracies and misleading claims. Exercise caution when considering this content."}
+                    </p>
+                  </div>
+                  
                   <div className="space-y-6">
                     {factChecks.map((check, index) => (
                       <div key={index} className={`border rounded-md p-4 ${
@@ -524,6 +618,34 @@ const SherlockPage = () => {
                             }`}>
                               {check.explanation}
                             </p>
+                            
+                            {/* Detailed Analysis */}
+                            {check.detailed_analysis && (
+                              <div className="mt-3 p-3 bg-white bg-opacity-50 rounded-md text-xs text-gray-700">
+                                <p className="font-medium mb-1">Detailed Analysis:</p>
+                                <p>{check.detailed_analysis}</p>
+                              </div>
+                            )}
+                            
+                            {/* Sources */}
+                            {check.sourceNames && check.sourceNames.length > 0 && (
+                              <div className="mt-2">
+                                <p className="text-xs font-medium text-gray-500 mb-1">Sources:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {check.sourceNames.map((name, idx) => (
+                                    <a 
+                                      key={idx}
+                                      href={check.sourceLinks[idx] || "#"}
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-xs bg-white bg-opacity-50 text-indigo-700 py-0.5 px-2 rounded hover:bg-white transition-colors"
+                                    >
+                                      {name}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -533,18 +655,25 @@ const SherlockPage = () => {
                   <div className="mt-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-3">Sources</h3>
                     <ul className="space-y-1">
-                      <li className="flex items-start gap-2">
-                        <div className="min-w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2"></div>
-                        <a href="#" className="text-indigo-600 hover:underline text-sm">Encyclopedia Britannica</a>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <div className="min-w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2"></div>
-                        <a href="#" className="text-indigo-600 hover:underline text-sm">NASA Earth Observatory</a>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <div className="min-w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2"></div>
-                        <a href="#" className="text-indigo-600 hover:underline text-sm">Journal of Physical Chemistry</a>
-                      </li>
+                      {[...new Set(factChecks.flatMap(check => check.sourceNames || []))].map((sourceName, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <div className="min-w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2"></div>
+                          <a href="#" className="text-indigo-600 hover:underline text-sm">{sourceName}</a>
+                        </li>
+                      ))}
+                      {/* Add some fallback sources if no sources were found */}
+                      {factChecks.flatMap(check => check.sourceNames || []).length === 0 && (
+                        <>
+                          <li className="flex items-start gap-2">
+                            <div className="min-w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2"></div>
+                            <a href="#" className="text-indigo-600 hover:underline text-sm">Encyclopedia Britannica</a>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <div className="min-w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2"></div>
+                            <a href="#" className="text-indigo-600 hover:underline text-sm">Scientific American</a>
+                          </li>
+                        </>
+                      )}
                     </ul>
                   </div>
                   

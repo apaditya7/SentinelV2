@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Text } from "@react-three/drei";
 import { useState, useEffect } from "react";
 import "./App.css";
 
@@ -15,6 +15,10 @@ function Courtroom() {
 }
 
 function CourtroomLayout() {
+  // Sample text for speech bubbles - this would be replaced with real data later
+  const redAgentText = "I believe this claim is false based on evidence from reliable sources.";
+  const blueAgentText = "The facts clearly show this statement is misleading and here's why...";
+
   return (
     <>
       <TableWithLegs position={[-3, 0, 2]} color="blue" />
@@ -26,6 +30,8 @@ function CourtroomLayout() {
         tieColor="black"
         gestureType="presenting" 
         rotation={Math.PI} // Rotated 180 degrees to fully face the judge
+        speechText={redAgentText}
+        showSpeech={true}
       />
       <HumanoidCharacter 
         position={[3, 0, 2.5]} 
@@ -33,6 +39,8 @@ function CourtroomLayout() {
         tieColor="black"
         gestureType="pointing" 
         rotation={Math.PI} // Rotated 180 degrees to fully face the judge
+        speechText={blueAgentText}
+        showSpeech={true}
       />
       <JudgeCharacter position={[0, 0, -1.2]} />
     </>
@@ -107,7 +115,80 @@ function JudgeCharacter({ position }) {
   );
 }
 
-function HumanoidCharacter({ position, suitColor = "navy", tieColor = "black", gestureType = "none", rotation = 0 }) {
+// Speech bubble component that works in 3D space
+function SpeechBubble({ position, text, side = "left" }) {
+  const [displayText, setDisplayText] = useState("");
+  const [textIndex, setTextIndex] = useState(0);
+  
+  // Typing effect
+  useEffect(() => {
+    if (textIndex < text.length) {
+      const timer = setTimeout(() => {
+        setDisplayText(prev => prev + text[textIndex]);
+        setTextIndex(textIndex + 1);
+      }, 30);
+      return () => clearTimeout(timer);
+    }
+  }, [text, textIndex]);
+  
+  // Reset animation when text changes
+  useEffect(() => {
+    setDisplayText("");
+    setTextIndex(0);
+  }, [text]);
+  
+  const bubbleWidth = 2.2;
+  const bubbleHeight = 1.2;
+  const offsetX = side === "left" ? -0.8 : 0.8;
+  
+  return (
+    <group position={[position[0] + offsetX, position[1] + 3, position[2] - 5]}>
+      {/* Main bubble */}
+      <mesh>
+        <boxGeometry args={[bubbleWidth, bubbleHeight, 0.1]} />
+        <meshStandardMaterial color="white" />
+      </mesh>
+      
+      {/* Border */}
+      <mesh position={[0, 0, 0.01]}>
+        <boxGeometry args={[bubbleWidth + 0.05, bubbleHeight + 0.05, 0.01]} />
+        <meshStandardMaterial color="black" />
+      </mesh>
+      <mesh position={[0, 0, 0.02]}>
+        <boxGeometry args={[bubbleWidth, bubbleHeight, 0.01]} />
+        <meshStandardMaterial color="white" />
+      </mesh>
+      
+      {/* Pointer triangle - positioned based on which side */}
+      <mesh position={[side === "left" ? bubbleWidth/2 + 0.2 : -bubbleWidth/2 - 0.2, -0.4, 0]} rotation={[0, 0, side === "left" ? Math.PI/4 : -Math.PI/4]}>
+        <boxGeometry args={[0.4, 0.4, 0.1]} />
+        <meshStandardMaterial color="white" />
+      </mesh>
+      
+      {/* Text using @react-three/drei Text component */}
+      <Text
+        position={[0, 0, 0.06]}
+        fontSize={0.1}
+        maxWidth={2}
+        lineHeight={1.2}
+        textAlign="center"
+        color="black"
+      >
+        {displayText}
+      </Text>
+    </group>
+  );
+}
+
+function HumanoidCharacter({ 
+  position, 
+  suitColor = "navy", 
+  tieColor = "black", 
+  gestureType = "none", 
+  rotation = 0, 
+  speechText = "",
+  showSpeech = false
+}) {
   const [armRotation, setArmRotation] = useState(0);
   
   // Animation for arm gestures
@@ -127,6 +208,15 @@ function HumanoidCharacter({ position, suitColor = "navy", tieColor = "black", g
 
   return (
     <group rotation={[0, rotation, 0]}>
+      {/* Speech bubble */}
+      {showSpeech && speechText && (
+        <SpeechBubble 
+          position={position} 
+          text={speechText} 
+          side={position[0] < 0 ? "right" : "left"} 
+        />
+      )}
+    
       {/* Head */}
       <mesh position={[position[0], position[1] + 1.8, position[2]-5.5]}>
         <boxGeometry args={[0.4, 0.4, 0.4]} />

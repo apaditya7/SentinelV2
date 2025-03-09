@@ -1,5 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Shield, Search, FileText, Gavel, Headphones } from 'lucide-react';
+// Import images from assets folder
+import batmanSilhouette from '../assets/batman.png';
+import sherlockSilhouette from '../assets/sher.webp';
+import poirotSilhouette from '../assets/poi.webp';
+import harveySpecter from '../assets/harvey.png';
+import saulGoodman from '../assets/saul.png';
 
 const HomePage = () => {
   return (
@@ -45,6 +51,7 @@ const HomePage = () => {
               description="Batman specializes in analyzing YouTube videos for misinformation. His detective skills help identify misleading content."
               icon={<Shield className="w-6 h-6 text-cyan-500" />}
               color="from-blue-500 to-blue-700"
+              imageSrc={batmanSilhouette}
               link="/batman"
             />
             
@@ -54,6 +61,7 @@ const HomePage = () => {
               description="With his legendary deductive reasoning, Sherlock analyzes text and statements to separate fact from fiction."
               icon={<Search className="w-6 h-6 text-cyan-500" />}
               color="from-indigo-500 to-purple-700"
+              imageSrc={sherlockSilhouette}
               link="/sherlock"
             />
             
@@ -68,6 +76,7 @@ const HomePage = () => {
                 </div>
               }
               color="from-teal-500 to-teal-700"
+              imageSrc={poirotSilhouette}
               link="/detective"
             />
           </div>
@@ -87,11 +96,19 @@ const HomePage = () => {
                   <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-white/10 rounded-full transform -translate-y-1/2 blur-2xl"></div>
                   <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-orange-500/10 rounded-full transform -translate-y-1/2 blur-2xl"></div>
                 </div>
-                <div className="relative z-10 p-8 text-center">
-                  <h3 className="text-3xl font-bold text-white mb-2">The Courtroom</h3>
-                  <p className="text-purple-200 text-lg max-w-2xl mx-auto">
-                    Witness a debate between legendary attorneys Harvey Specter and Saul Goodman as they analyze both sides of any argument.
-                  </p>
+                <div className="flex justify-center items-center w-full">
+                  <div className="w-1/3 flex justify-center">
+                    <img src={harveySpecter} alt="Harvey Specter" className="h-48 object-contain" />
+                  </div>
+                  <div className="text-center px-4">
+                    <h3 className="text-3xl font-bold text-white mb-2">The Courtroom</h3>
+                    <p className="text-purple-200 text-lg">
+                      Witness a debate between legendary attorneys as they analyze both sides of any argument.
+                    </p>
+                  </div>
+                  <div className="w-1/3 flex justify-center">
+                    <img src={saulGoodman} alt="Saul Goodman" className="h-48 object-contain" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -119,16 +136,11 @@ const HomePage = () => {
   );
 };
 
-const SentinelCard = ({ name, role, description, icon, color, link }) => {
+const SentinelCard = ({ name, role, description, color, imageSrc, link }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 h-full hover:-translate-y-1 transition-transform duration-300">
-      <div className={`relative h-48 bg-gradient-to-r ${color} overflow-hidden`}>
-        <div className="absolute inset-0 flex items-center justify-center">
-          {/* Placeholder for character silhouette */}
-          <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center">
-            {icon}
-          </div>
-        </div>
+      <div className={`relative h-48 bg-gradient-to-r ${color} overflow-hidden flex items-center justify-center`}>
+        <img src={imageSrc} alt={name} className="h-40 object-contain" />
       </div>
       
       <div className="p-6">

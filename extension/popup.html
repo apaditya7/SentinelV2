@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel AI</title>
+  <!-- Critical inline styles to prevent unstyled flash -->
+  <style>
+    :root {
+      --primary: #00bcd4;
+      --primary-dark: #0097a7;
+      --primary-light: #4dd0e1;
+      --primary-gradient: linear-gradient(135deg, #00bcd4, #006064);
+      --text-primary: #263238;
+      --card-bg: #ffffff;
+      --owl-glasses-max-width: 200px;
+    }
+    
+    html {
+      width: 600px;
+      height: 600px;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      width: 600px !important;
+      min-width: 600px !important;
+      max-width: 600px !important;
+      height: 600px;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: #f5f7fa;
+      box-sizing: border-box;
+    }
+    
+    .container {
+      width: 600px !important;
+      min-width: 600px !important;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--card-bg);
+      box-sizing: border-box;
+    }
+    
+    header {
+      padding: 20px;
+      background: var(--primary-gradient);
+      color: white;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    /* Debug border to check if styles are applying */
+    body {
+      border: 5px solid red !important;
+    }
+  </style>
+  <!-- Load fonts before external stylesheets -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Make sure the stylesheet path matches exactly -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header section -->
+    <header>
+      <div class="logo-section">
+        <div class="logo-container">
+          <img src="images/sentinel-logo.png" alt="Sentinel AI" class="logo">
+        </div>
+        <h1>Sentinel<span>AI</span></h1>
+      </div>
+      <p class="subtitle">Your Truth Guardian</p>
+    </header>
+    
+    <!-- Feature selection tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="youtube-checker">
+        <i class="fab fa-youtube"></i> YouTube Checker
+      </button>
+      <button class="tab" data-tab="deepfake-detector">
+        <i class="fas fa-video"></i> Deepfake
+      </button>
+      <button class="tab" data-tab="text-verifier">
+        <i class="fas fa-file-alt"></i> Text
+      </button>
+    </div>
+    
+    <!-- Tab content - YouTube Checker -->
+    <div class="tab-content active" id="youtube-checker">
+      <div class="input-container">
+        <input type="text" id="youtube-url" placeholder="Enter YouTube URL or use current" class="input-field">
+        <button id="getTranscript" class="action-button">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <div class="instructions">
+        <div class="instructions-title">
+          <i class="fas fa-lightbulb"></i>
+          <span>How to use YouTube Checker</span>
+        </div>
+        <ul>
+          <li>Open a YouTube video</li>
+          <li>Enter the URL above or use current tab</li>
+          <li>We'll analyze the video content for misinformation</li>
+        </ul>
+      </div>
+      
+      <!-- Recent YouTube checks -->
+      <div class="history-section">
+        <div class="section-title">
+          <i class="fas fa-history"></i>
+          <span>Recent Checks</span>
+        </div>
+        <div class="history-container">
+          <div class="history-item">
+            <div class="history-text">How AI Will Change Everything</div>
+            <div class="history-meta">
+              <span class="history-score high">8.4</span>
+              <span class="history-date">Today, 2:45 PM</span>
+            </div>
+          </div>
+          <div class="history-item">
+            <div class="history-text">The Truth About Quantum Computing</div>
+            <div class="history-meta">
+              <span class="history-score low">2.1</span>
+              <span class="history-date">Yesterday, 11:20 AM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tab content - Deepfake Detector -->
+    <div class="tab-content" id="deepfake-detector">
+      <div class="upload-container">
+        <div class="upload-area" id="upload-area">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Drop image/video here or click to upload</p>
+          <input type="file" id="file-upload" accept="image/*,video/*" hidden>
+        </div>
+        <button id="analyze-media" class="primary-button">
+          <i class="fas fa-microscope"></i> Analyze
+        </button>
+      </div>
+      
+      <div class="instructions">
+        <div class="instructions-title">
+          <i class="fas fa-lightbulb"></i>
+          <span>How to Detect Deepfakes</span>
+        </div>
+        <ul>
+          <li>Upload an image or video you suspect is manipulated</li>
+          <li>Our AI will analyze facial features and artifacts</li>
+          <li>Get a detailed breakdown of potential manipulations</li>
+        </ul>
+      </div>
+      
+      <!-- Sample results preview -->
+      <div class="results-preview">
+        <div class="section-title">
+          <i class="fas fa-chart-bar"></i>
+          <span>Sample Analysis</span>
+        </div>
+        <div class="preview-container">
+          <div class="owl-container">
+            <div class="owl">
+              <div class="owl-eyes">
+                <div class="owl-eye left">
+                  <div class="owl-pupil"></div>
+                </div>
+                <div class="owl-eye right">
+                  <div class="owl-pupil"></div>
+                </div>
+              </div>
+              <div class="owl-beak"></div>
+              <div class="owl-eyebrows">
+                <div class="owl-eyebrow left"></div>
+                <div class="owl-eyebrow right"></div>
+              </div>
+              <div class="owl-glasses"></div>
+            </div>
+          </div>
+          <div class="owl-wisdom" style="width: 60%"></div>
+        </div>
+        <div class="detection-score">
+          <span class="score-label">Deepfake Probability:</span>
+          <span class="score-value high">76%</span>
+        </div>
+        <div class="detection-details">
+          <p>Inconsistent shadows detected around facial features</p>
+          <p>Unnatural eye blinking patterns</p>
+          <p>Digital artifacts present in hair boundaries</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tab content - Text Verifier -->
+    <div class="tab-content" id="text-verifier">
+      <div class="input-container">
+        <textarea id="text-input" placeholder="Enter text to verify or check for factual accuracy" class="text-area"></textarea>
+        <button id="verify-text" class="primary-button">
+          <i class="fas fa-check-double"></i> Verify Facts
+        </button>
+      </div>
+      
+      <div class="instructions">
+        <div class="instructions-title">
+          <i class="fas fa-lightbulb"></i>
+          <span>How to Use Text Verifier</span>
+        </div>
+        <ul>
+          <li>Paste text containing claims or facts</li>
+          <li>Or use the right-click menu on any webpage</li>
+          <li>Press Enter or click Verify to analyze</li>
+        </ul>
+      </div>
+      
+      <!-- Recent text verifications -->
+      <div class="history-section">
+        <div class="section-title">
+          <i class="fas fa-history"></i>
+          <span>Recent Verifications</span>
+        </div>
+        <div class="history-container">
+          <div class="history-item">
+            <div class="history-text">"The Great Wall of China is the only human-made structure visible from space."</div>
+            <div class="history-meta">
+              <span class="history-score high">7.8</span>
+              <span class="history-date">2 days ago</span>
+            </div>
+          </div>
+          <div class="history-item">
+            <div class="history-text">"The Earth's magnetic field reverses every 200,000 to 300,000 years."</div>
+            <div class="history-meta">
+              <span class="history-score medium">5.2</span>
+              <span class="history-date">Last week</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Loading Screen - Initially Hidden -->
+    <div id="loading-section" class="loading-section" style="display: none;">
+      <div class="owl-container animated">
+        <div class="owl">
+          <div class="owl-eyes searching">
+            <div class="owl-eye left">
+              <div class="owl-pupil"></div>
+            </div>
+            <div class="owl-eye right">
+              <div class="owl-pupil"></div>
+            </div>
+          </div>
+          <div class="owl-beak"></div>
+          <div class="owl-eyebrows thinking">
+            <div class="owl-eyebrow left"></div>
+            <div class="owl-eyebrow right"></div>
+          </div>
+          <div class="owl-glasses"></div>
+        </div>
+      </div>
+      <p class="loading-text">Analyzing for misinformation...</p>
+      <div class="loading-bar">
+        <div class="loading-progress"></div>
+      </div>
+    </div>
+    
+    <!-- Results Section - Initially Hidden -->
+    <div id="results-section" class="results-section" style="display: none;">
+      <div class="results-header">
+        <h2>Analysis Results</h2>
+        <button id="back-button" class="back-button">
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+      </div>
+      
+      <div class="score-container">
+        <h3>Misinformation Score</h3>
+        
+        <!-- Owl with extending glasses -->
+        <div class="owl-container">
+          <div class="owl">
+            <div class="owl-eyes">
+              <div class="owl-eye left">
+                <div class="owl-pupil"></div>
+              </div>
+              <div class="owl-eye right">
+                <div class="owl-pupil"></div>
+              </div>
+            </div>
+            <div class="owl-beak"></div>
+            <div class="owl-eyebrows">
+              <div class="owl-eyebrow left"></div>
+              <div class="owl-eyebrow right"></div>
+            </div>
+            <div class="owl-glasses"></div>
+          </div>
+        </div>
+        <div id="owl-wisdom" class="owl-wisdom"></div>
+        
+        <div class="score-wrapper">
+          <span id="score-badge" class="score-badge">?</span>
+          <span id="score-label" class="score-label">0/10</span>
+        </div>
+        <div id="score-description" class="score-description">Analyzing...</div>
+      </div>
+      
+      <div class="summary-container">
+        <h3>Summary</h3>
+        <p id="summary">This content contains several misleading claims about climate science. While some basic facts are accurate, key statistics are exaggerated and several causal relationships are presented incorrectly.</p>
+      </div>
+      
+      <div class="report-container">
+        <h3>Fact Check Report</h3>
+        <div id="report" class="report-content">
+          <div class="fact-item true">
+            <div class="fact-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="fact-content">
+              <p class="fact-claim">Average global temperatures have risen over the past century.</p>
+              <p class="fact-verification">VERIFIED: Global temperature records confirm a warming trend of approximately 1°C since pre-industrial times.</p>
+            </div>
+          </div>
+          <div class="fact-item false">
+            <div class="fact-icon"><i class="fas fa-times-circle"></i></div>
+            <div class="fact-content">
+              <p class="fact-claim">Sea levels are rising at a rate of 3 feet per decade.</p>
+              <p class="fact-verification">FALSE: Current sea level rise is approximately 3.3 millimeters per year, not 3 feet per decade.</p>
+            </div>
+          </div>
+          <div class="fact-item partial">
+            <div class="fact-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="fact-content">
+              <p class="fact-claim">Polar bear populations are declining due to climate change.</p>
+              <p class="fact-verification">PARTIALLY TRUE: Some polar bear populations are declining, but others remain stable. The relationship with climate change is complex.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="sources-container">
+        <h3>Sources</h3>
+        <ul id="sources-list" class="sources-list">
+          <li><a href="#" target="_blank">NASA Global Climate Change Portal</a></li>
+          <li><a href="#" target="_blank">IPCC Sixth Assessment Report</a></li>
+          <li><a href="#" target="_blank">National Snow and Ice Data Center</a></li>
+          <li><a href="#" target="_blank">World Meteorological Organization</a></li>
+        </ul>
+      </div>
+      
+      <div class="button-container">
+        <button id="share-button" class="share-button">
+          <i class="fas fa-download"></i> Download Report
+        </button>
+      </div>
+    </div>
+    
+    <footer>
+      <p>© 2025 Sentinel AI | <a href="#" id="settings-link">Settings</a></p>
+    </footer>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

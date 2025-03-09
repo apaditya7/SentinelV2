@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            text-align: left;
+            padding: 20px;
+        }
+
+        #transcriptContainer {
+            white-space: pre-wrap;
+            font-size: 16px;
+            max-width: 90%;
+            margin: auto;
+            overflow-wrap: break-word;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            width: 200px;
+            font-size: 14px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="transcriptContainer">Loading transcript...</div>
+
+    <button id="downloadTranscript">Download Transcript</button>
+    <button onclick="window.location.href='popup.html'">Back</button>
+
+    <script>
+        // ✅ Load transcript from storage
+        chrome.storage.local.get("transcript", function (result) {
+            if (result.transcript) {
+                document.getElementById("transcriptContainer").innerText = result.transcript;
+            } else {
+                document.getElementById("transcriptContainer").innerText = "No transcript available.";
+            }
+        });
+
+        // ✅ Handle transcript download
+        document.getElementById("downloadTranscript").addEventListener("click", function () {
+            chrome.storage.local.get("transcript", function (result) {
+                if (result.transcript) {
+                    let blob = new Blob([result.transcript], { type: "text/plain" });
+                    let url = URL.createObjectURL(blob);
+                    let a = document.createElement("a");
+                    a.href = url;
+                    a.download = "transcript.txt";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    alert("No transcript available to download.");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

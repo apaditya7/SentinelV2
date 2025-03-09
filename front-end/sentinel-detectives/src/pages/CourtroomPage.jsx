@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { ArrowLeft, Gavel, MessageSquare, AlertTriangle, Lightbulb, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
+// Import attorney images
+import harveySpecter from '../assets/harvey.png';
+import saulGoodman from '../assets/saul.png';
 
 const CourtroomPage = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -86,8 +89,8 @@ const CourtroomPage = () => {
               
               <div className="flex justify-between items-center mb-6">
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-2">
-                    <img src="https://via.placeholder.com/50" alt="Harvey Specter" className="rounded-full" />
+                  <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-2 overflow-hidden">
+                    <img src={harveySpecter} alt="Harvey Specter" className="w-16 h-16 object-cover" />
                   </div>
                   <p className="text-xs font-medium text-gray-800">Harvey Specter</p>
                 </div>
@@ -95,8 +98,8 @@ const CourtroomPage = () => {
                 <div className="flex-shrink-0 text-gray-400">VS</div>
                 
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-2">
-                    <img src="https://via.placeholder.com/50" alt="Saul Goodman" className="rounded-full" />
+                  <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-2 overflow-hidden">
+                    <img src={saulGoodman} alt="Saul Goodman" className="w-16 h-16 object-cover" />
                   </div>
                   <p className="text-xs font-medium text-gray-800">Saul Goodman</p>
                 </div>
@@ -236,8 +239,8 @@ const CourtroomPage = () => {
                     {/* Harvey Specter Arguments */}
                     <div className="border rounded-md overflow-hidden">
                       <div className="bg-blue-600 p-3 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                          <img src="https://via.placeholder.com/40" alt="Harvey Specter" className="rounded-full" />
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <img src={harveySpecter} alt="Harvey Specter" className="w-10 h-10 object-cover" />
                         </div>
                         <div>
                           <h3 className="text-white font-semibold">Harvey Specter</h3>
@@ -263,8 +266,8 @@ const CourtroomPage = () => {
                     {/* Saul Goodman Arguments */}
                     <div className="border rounded-md overflow-hidden">
                       <div className="bg-red-600 p-3 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                          <img src="https://via.placeholder.com/40" alt="Saul Goodman" className="rounded-full" />
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <img src={saulGoodman} alt="Saul Goodman" className="w-10 h-10 object-cover" />
                         </div>
                         <div>
                           <h3 className="text-white font-semibold">Saul Goodman</h3>

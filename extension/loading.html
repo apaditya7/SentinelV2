@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #0056b3;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #loadingGif {
+            width: 150px;
+            height: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>🕵️‍♂️ We are investigating...</h2>
+    <img id="loadingGif" src="" alt="Loading">
+
+    <script>
+        document.getElementById("loadingGif").src = chrome.runtime.getURL("reading-files-batman.gif");
+
+        // ✅ WAIT until transcript is stored before redirecting
+        let checkTranscript = setInterval(() => {
+            chrome.storage.local.get("transcript", function (result) {
+                if (result.transcript) {
+                    clearInterval(checkTranscript); // ✅ Stop checking once found
+                    window.location.href = "transcript.html";
+                }
+            });
+        }, 500); // ✅ Check every 500ms instead of every second for faster response
+    </script>
+</body>
+</html>
