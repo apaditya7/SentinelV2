@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, Gavel, MessageSquare, AlertTriangle, Lightbulb, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
 // Import attorney images
 import harveySpecter from '../assets/harvey.png';
 import saulGoodman from '../assets/saul.png';
-
-const API_BASE_URL = 'https://techfest-backend-4334b5c7ec3d.herokuapp.com'; // Change this to your actual API URL
 
 const CourtroomPage = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -15,210 +13,43 @@ const CourtroomPage = () => {
     harvey: [],
     saul: []
   });
-  const [sessionId, setSessionId] = useState(null);
-  const [currentRound, setCurrentRound] = useState(0);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [summary, setSummary] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [error, setError] = useState(null);
 
-  // Function to start a new debate
-  // Add proper CORS headers handling in your backend if needed
-// In the frontend, let's modify the polling mechanism:
-
-const startDebate = async () => {
-  if (!debateInput) return;
-  
-  setIsAnalyzing(true);
-  setError(null);
-  
-  try {
-    console.log("Starting debate...");
-    const response = await fetch(`${API_BASE_URL}/api/start_debate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ topic: debateInput }),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to start debate');
-    }
-    
-    const data = await response.json();
-    console.log("Session created:", data);
-    setSessionId(data.session_id);
-    
-    // Start polling right away
-    setTimeout(() => pollForRound(data.session_id), 2000);
-  } catch (err) {
-    console.error('Error starting debate:', err);
-    setError(`Error starting debate: ${err.message}`);
-    setIsAnalyzing(false);
-  }
-};
-
-const formatArguments = (argumentText) => {
-  if (!argumentText) return [];
-  
-  // Your backend seems to return formatted arguments with "##" headings
-  // Extract these sections and convert them to an array of points
-  const sections = argumentText.split(/##\s+/);
-  
-  // Filter out empty sections and format each point
-  const points = sections
-    .filter(section => section.trim().length > 0)
-    .map(section => {
-      // Get the first line as a header, rest as content
-      const lines = section.split('\n');
-      const header = lines[0].trim();
-      
-      if (header.startsWith('CLAIM') || 
-          header.startsWith('COUNTER-CLAIM') || 
-          header.startsWith('EVIDENCE') || 
-          header.startsWith('CONCLUSION')) {
-        // Return everything after the header
-        return section.substring(header.length).trim();
-      }
-      
-      return section.trim();
-    })
-    .filter(point => point.length > 0);
-  
-  // Return at most 4 points
-  return points.slice(0, 4);
-};
-
-// Also update the pollForRound function to correctly handle the response format
-const pollForRound = async (sessionIdParam) => {
-  const activeSessionId = sessionIdParam || sessionId;
-  
-  if (!activeSessionId) {
-    console.error("No session ID available for polling");
-    setError("Session ID not found. Please try again.");
-    setIsAnalyzing(false);
-    return;
-  }
-  
-  try {
-    console.log("Polling for round with session ID:", activeSessionId);
-    const response = await fetch(`${API_BASE_URL}/api/get_round?session_id=${activeSessionId}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch debate round: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log("Received round data:", data);
-    
-    // Format the arguments for display
-    const harveyPoints = formatArguments(data.pro_argument);
-    const saulPoints = formatArguments(data.con_argument);
-    
-    console.log("Formatted Harvey points:", harveyPoints);
-    console.log("Formatted Saul points:", saulPoints);
-    
-    setDebateResults({
-      harvey: harveyPoints.length > 0 ? harveyPoints : ["No arguments available"],
-      saul: saulPoints.length > 0 ? saulPoints : ["No arguments available"]
-    });
-    
-    setCurrentRound(data.round || 1);
-    setIsCompleted(data.completed || false);
-    
-    setIsAnalyzing(false);
-    setShowResults(true);
-    
-    // If the debate is completed, get the summary
-    if (data.completed) {
-      fetchSummary(activeSessionId);
-    }
-  } catch (err) {
-    console.error('Error fetching debate round:', err);
-    
-    // If it's a network or server error, try again after a short delay
-    if (err.name === 'TypeError' || err.message.includes('Failed to fetch')) {
-      console.log("Network error, retrying in 3 seconds...");
-      setTimeout(() => pollForRound(activeSessionId), 3000);
-      return;
-    }
-    
-    setError(`Error fetching debate round: ${err.message}`);
-    setIsAnalyzing(false);
-  }
-};
-  
-  // Function to submit user feedback
-  const submitFeedback = async () => {
-    if (!sessionId || !feedback) return;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!debateInput) return;
     
     setIsAnalyzing(true);
-    setError(null);
     
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/submit_feedback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          session_id: sessionId,
-          feedback: feedback 
-        }),
+    // Simulate analysis time
+    setTimeout(() => {
+      // Sample debate arguments for demonstration
+      setDebateResults({
+        harvey: [
+          "The evidence clearly supports this position due to three key factors.",
+          "First, multiple peer-reviewed studies have demonstrated consistent results.",
+          "Second, real-world applications have proven its effectiveness.",
+          "Finally, the counterarguments lack substantial empirical backing."
+        ],
+        saul: [
+          "While my opponent makes compelling points, we must consider alternative perspectives.",
+          "The studies referenced are limited in scope and don't account for diverse contexts.",
+          "Practical application has shown mixed results across different demographics.",
+          "Additionally, several experts in the field have raised legitimate concerns."
+        ]
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to submit feedback');
-      }
-      
-      // Clear the feedback input
-      setFeedback('');
-      
-      // Poll for the next round
-      pollForRound();
-    } catch (err) {
-      console.error('Error submitting feedback:', err);
-      setError(`Error submitting feedback: ${err.message}`);
       setIsAnalyzing(false);
-    }
+      setShowResults(true);
+    }, 3000);
   };
   
-  // Function to fetch debate summary
-  const fetchSummary = async () => {
-    if (!sessionId) return;
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/get_summary?session_id=${sessionId}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch debate summary');
-      }
-      
-      const data = await response.json();
-      setSummary(data.summary || 'No summary available');
-    } catch (err) {
-      console.error('Error fetching summary:', err);
-      // Don't set error - this is not critical
-    }
-  };
-  
-  
-  // Reset the form and start a new debate
   const resetForm = () => {
     setShowResults(false);
-    setIsAnalyzing(false);
     setDebateInput('');
     setDebateResults({
       harvey: [],
       saul: []
     });
-    setSessionId(null);
-    setCurrentRound(0);
-    setIsCompleted(false);
-    setSummary('');
-    setFeedback('');
-    setError(null);
   };
 
   // Example topics for quick selection
@@ -231,11 +62,6 @@ const pollForRound = async (sessionIdParam) => {
 
   const selectExample = (example) => {
     setDebateInput(example);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    startDebate();
   };
 
   return (
@@ -386,12 +212,6 @@ const pollForRound = async (sessionIdParam) => {
                 <div className="mt-8 w-full max-w-md bg-gray-200 rounded-full h-2.5">
                   <div className="bg-purple-600 h-2.5 rounded-full animate-pulse w-[60%]"></div>
                 </div>
-                
-                {error && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded text-red-700 text-sm">
-                    {error}
-                  </div>
-                )}
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
@@ -471,88 +291,54 @@ const pollForRound = async (sessionIdParam) => {
                     </div>
                   </div>
                   
-                  {!isCompleted ? (
-                    <div className="mb-6 border-t border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Your Judgment</h3>
-                      <p className="text-gray-600 mb-3">
-                        As the judge, provide your feedback on these arguments. Your insights will guide the next round of debate.
-                      </p>
-                      <div className="flex space-x-3">
-                        <textarea
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-500 transition-all"
-                          placeholder="Enter your feedback on both arguments..."
-                          rows={3}
-                          value={feedback}
-                          onChange={(e) => setFeedback(e.target.value)}
-                        ></textarea>
-                        <button
-                          onClick={submitFeedback}
-                          disabled={!feedback}
-                          className={`px-4 py-2 rounded-md font-medium text-white ${
-                            !feedback
-                              ? 'bg-gray-300 cursor-not-allowed'
-                              : 'bg-purple-600 hover:bg-purple-700'
-                          }`}
-                        >
-                          Submit
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Type "exit" to end the debate early.
+                  <div className="mb-6 border-t border-b border-gray-100 py-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                      <Scale size={18} className="text-purple-600" />
+                      <span>Balanced Perspective</span>
+                    </h3>
+                    <div className="bg-purple-50 border border-purple-100 rounded-md p-4">
+                      <p className="text-gray-700">
+                        This topic has valid perspectives on both sides. Harvey emphasizes evidence-based reasoning and established precedents, 
+                        while Saul highlights contextual factors and alternative interpretations. The truth likely contains elements from both viewpoints, 
+                        and the most balanced approach would consider the strengths of each argument.
                       </p>
                     </div>
-                  ) : (
-                    <div className="mb-6 border-t border-b border-gray-100 py-4">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <Scale size={18} className="text-purple-600" />
-                        <span>Balanced Perspective</span>
-                      </h3>
-                      <div className="bg-purple-50 border border-purple-100 rounded-md p-4">
-                        <p className="text-gray-700">
-                          {summary || "This topic has valid perspectives on both sides. Harvey emphasizes evidence-based reasoning and established precedents, while Saul highlights contextual factors and alternative interpretations. The truth likely contains elements from both viewpoints, and the most balanced approach would consider the strengths of each argument."}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                   
-                  {isCompleted && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Key Considerations</h3>
-                      <div className="space-y-3">
-                        <ConsiderationItem 
-                          title="Consider the source of information"
-                          description="Both sides may cite sources that favor their position. Evaluate the credibility of sources used in each argument."
-                        />
-                        
-                        <ConsiderationItem 
-                          title="Look for common ground"
-                          description="Despite their differences, both perspectives often share some fundamental agreements that can serve as a starting point."
-                        />
-                        
-                        <ConsiderationItem 
-                          title="Context matters"
-                          description="What's true in one context may not apply universally. Consider how different circumstances might affect each argument."
-                        />
-                        
-                        <ConsiderationItem 
-                          title="Watch for logical fallacies"
-                          description="Both sides may employ rhetorical techniques that sound convincing but don't actually support their conclusion."
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {isCompleted && (
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <button className="bg-gradient-to-r from-blue-600 to-blue-800 text-white font-medium py-2 px-4 rounded-md hover:from-blue-700 hover:to-blue-900 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                        <span>Download Harvey's Brief</span>
-                      </button>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Key Considerations</h3>
+                    <div className="space-y-3">
+                      <ConsiderationItem 
+                        title="Consider the source of information"
+                        description="Both sides may cite sources that favor their position. Evaluate the credibility of sources used in each argument."
+                      />
                       
-                      <button className="bg-gradient-to-r from-red-600 to-red-800 text-white font-medium py-2 px-4 rounded-md hover:from-red-700 hover:to-red-900 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
-                        <span>Download Saul's Brief</span>
-                      </button>
+                      <ConsiderationItem 
+                        title="Look for common ground"
+                        description="Despite their differences, both perspectives often share some fundamental agreements that can serve as a starting point."
+                      />
+                      
+                      <ConsiderationItem 
+                        title="Context matters"
+                        description="What's true in one context may not apply universally. Consider how different circumstances might affect each argument."
+                      />
+                      
+                      <ConsiderationItem 
+                        title="Watch for logical fallacies"
+                        description="Both sides may employ rhetorical techniques that sound convincing but don't actually support their conclusion."
+                      />
                     </div>
-                  )}
+                  </div>
+                  
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button className="bg-gradient-to-r from-blue-600 to-blue-800 text-white font-medium py-2 px-4 rounded-md hover:from-blue-700 hover:to-blue-900 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                      <span>Download Harvey's Brief</span>
+                    </button>
+                    
+                    <button className="bg-gradient-to-r from-red-600 to-red-800 text-white font-medium py-2 px-4 rounded-md hover:from-red-700 hover:to-red-900 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                      <span>Download Saul's Brief</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

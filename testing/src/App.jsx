@@ -1,11 +1,18 @@
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useLoader } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
 import { useState, useEffect } from "react";
+import { TextureLoader } from "three";
 import "./App.css";
 
 function Courtroom() {
+  const bgTexture = useLoader(TextureLoader, 'src/assets/courtroom.jpg'); // Replace with your image path
+
   return (
-    <Canvas style={{ background: "lightgray", width: "100vw", height: "100vh" }} camera={{ position: [0, 5, 10], fov: 50 }}>
+    <Canvas
+      style={{ width: "100vw", height: "100vh" }}
+      camera={{ position: [0, 5, 10], fov: 50 }}
+      scene={{ background: bgTexture }} // Set the background here
+    >
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} />
       <OrbitControls />
