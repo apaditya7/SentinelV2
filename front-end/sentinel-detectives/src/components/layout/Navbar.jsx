@@ -36,9 +36,9 @@ const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2 text-xl font-bold text-cyan-800">
           <div className="relative w-10 h-10 flex items-center justify-center bg-gradient-to-br from-cyan-600 to-cyan-800 rounded-lg shadow-md">
-            <span className="text-white font-bold">SD</span>
+            <span className="text-white font-bold">S.AI</span>
           </div>
-          <span>Sentinel<span className="text-orange-500">Detectives</span></span>
+          <span>Sentinel<span className="text-orange-500">AI</span></span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -46,7 +46,7 @@ const Navbar = () => {
           <NavLink to="/" label="Home" icon={<Home size={18} />} />
           <NavLink to="/batman" label="Batman" icon={<Shield size={18} />} />
           <NavLink to="/sherlock" label="Sherlock" icon={<Search size={18} />} />
-          <NavLink to="/detective" label="Detector" icon={<FileText size={18} />} />
+          <NavLink to="/detective" label="Poirot" icon={<FileText size={18} />} />
           <NavLink to="/courtroom" label="Courtroom" icon={<Gavel size={18} />} />
         </div>
 
@@ -69,7 +69,7 @@ const Navbar = () => {
           <MobileNavLink to="/" label="Home" icon={<Home size={20} />} />
           <MobileNavLink to="/batman" label="Batman" icon={<Shield size={20} />} />
           <MobileNavLink to="/sherlock" label="Sherlock" icon={<Search size={20} />} />
-          <MobileNavLink to="/detective" label="Detector" icon={<FileText size={20} />} />
+          <MobileNavLink to="/detective" label="Poirot" icon={<FileText size={20} />} />
           <MobileNavLink to="/courtroom" label="Courtroom" icon={<Gavel size={20} />} />
         </div>
       </div>

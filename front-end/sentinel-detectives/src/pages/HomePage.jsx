@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { Shield, Search, FileText, Gavel, Headphones } from 'lucide-react';
 // Import images from assets folder
 import batmanSilhouette from '../assets/batman.png';
-import sherlockSilhouette from '../assets/sher.webp';
-import poirotSilhouette from '../assets/poi.webp';
+import sherlockSilhouette from '../assets/sher.png';
+import poirotSilhouette from '../assets/poi.png';
 import harveySpecter from '../assets/harvey.png';
 import saulGoodman from '../assets/saul.png';
 
