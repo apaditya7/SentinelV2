@@ -58,7 +58,7 @@ const HomePage = () => {
             <SentinelCard 
               name="Sherlock Holmes"
               role="Text Fact Checker"
-              description="With his legendary deductive reasoning, Sherlock analyzes text and statements to separate fact from fiction."
+              description="With his legendary deductive reasoning, Sherlock analyzes text and statements to separate fact from fiction. He can also listen in on your audio to verify that too!"
               icon={<Search className="w-6 h-6 text-cyan-500" />}
               color="from-indigo-500 to-purple-700"
               imageSrc={sherlockSilhouette}

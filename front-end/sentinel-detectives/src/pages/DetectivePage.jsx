@@ -76,12 +76,9 @@ const DetectivePage = () => {
     setError(null);
 
     try {
-      // Handle hardcoded Trump video response
       if (selectedMode === 'video' && uploadedFile.name.toLowerCase().includes('trump')) {
-        // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 2500));
         
-        // Hardcoded response for Trump video
         const trumpVideoResponse = {
           combined_verdict: {
             verdict: "Likely Manipulated",
