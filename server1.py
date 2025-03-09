@@ -17,7 +17,7 @@ from urllib.parse import quote_plus
 OPENAI_API_KEY = ""
 GROQ_API_KEY = "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"
 GOOGLE_FACT_CHECK_API_KEY = "AIzaSyC4hRxckC42eHqRW_Zci60-OzL4JE60AwA"
-SERPER_API_KEY = "2e11739723e5c6dee0dd9d26547c5de74f00ad03"
+SERPER_API_KEY = ""
 
 # System prompt for extracting claims from transcript with context
 EXTRACT_CLAIMS_PROMPT = """
