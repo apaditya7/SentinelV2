@@ -36,7 +36,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2 text-xl font-bold text-cyan-800">
           <div className="relative w-10 h-10 flex items-center justify-center bg-gradient-to-br from-cyan-600 to-cyan-800 rounded-lg shadow-md">
-            <span className="text-white font-bold">S.AI</span>
+            <span className="text-white font-bold">S</span>
           </div>
           <span>Sentinel<span className="text-orange-500">AI</span></span>
         </Link>
