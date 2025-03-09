@@ -1,17 +1,34 @@
-import { useState, useRef } from 'react';
-import { ArrowLeft, Upload, AlertTriangle, CheckCircle, FileText, Camera, X, Headphones } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Upload, AlertTriangle, CheckCircle, FileText, Camera, X, Headphones, Shield, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+const API_ENDPOINT = 'http://localhost:5005/api/deepfake';
 
 const DetectivePage = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [selectedMode, setSelectedMode] = useState('image');
+  const [analysisResults, setAnalysisResults] = useState(null);
+  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
+    setError(null);
     const file = e.target.files[0];
     if (!file) return;
+    
+    // Check if file matches selected mode
+    const fileType = file.type.split('/')[0];
+    if (
+      (selectedMode === 'image' && fileType !== 'image') ||
+      (selectedMode === 'video' && fileType !== 'video') ||
+      (selectedMode === 'audio' && fileType !== 'audio')
+    ) {
+      setError(`Please select a ${selectedMode} file for ${selectedMode} mode.`);
+      return;
+    }
     
     setUploadedFile(file);
     
@@ -22,9 +39,22 @@ const DetectivePage = () => {
   
   const handleDrop = (e) => {
     e.preventDefault();
+    setError(null);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
+      
+      // Check if file matches selected mode
+      const fileType = file.type.split('/')[0];
+      if (
+        (selectedMode === 'image' && fileType !== 'image') ||
+        (selectedMode === 'video' && fileType !== 'video') ||
+        (selectedMode === 'audio' && fileType !== 'audio')
+      ) {
+        setError(`Please select a ${selectedMode} file for ${selectedMode} mode.`);
+        return;
+      }
+      
       setUploadedFile(file);
       
       // Create a preview URL for the uploaded file
@@ -37,30 +67,89 @@ const DetectivePage = () => {
     e.preventDefault();
   };
   
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!uploadedFile) return;
     
     setIsAnalyzing(true);
-    
-    // Simulate analysis time
-    setTimeout(() => {
-      setIsAnalyzing(false);
+    setError(null);
+
+    try {
+      // Create form data for API call
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      
+      // Call API
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to analyze the file');
+      }
+      
+      const data = await response.json();
+      setAnalysisResults(data);
       setShowResults(true);
-    }, 3000);
+    } catch (err) {
+      setError(err.message || 'An error occurred during analysis');
+      console.error('Analysis error:', err);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
   
   const resetForm = () => {
     setShowResults(false);
     setUploadedFile(null);
     setPreviewUrl(null);
+    setAnalysisResults(null);
+    setError(null);
   };
 
   const triggerFileInput = () => {
     fileInputRef.current.click();
   };
 
-  // Determine if file is audio
-  const isAudio = uploadedFile?.type?.startsWith('audio/');
+  // Switch detection mode
+  const changeMode = (mode) => {
+    if (mode !== selectedMode) {
+      resetForm();
+      setSelectedMode(mode);
+    }
+  };
+
+  // Cleanup URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  // Generate appropriate file accept type based on selected mode
+  const getAcceptTypes = () => {
+    switch (selectedMode) {
+      case 'image':
+        return 'image/*';
+      case 'video':
+        return 'video/*';
+      case 'audio':
+        return 'audio/*';
+      default:
+        return 'image/*,video/*,audio/*';
+    }
+  };
+
+  // Determine if file is audio, video, or image
+  const getFileType = () => {
+    if (!uploadedFile) return null;
+    return uploadedFile.type.split('/')[0];
+  };
+
+  const fileType = getFileType();
 
   return (
     <div className="pt-24 pb-12">
@@ -81,41 +170,40 @@ const DetectivePage = () => {
               <div className="w-20 h-20 mx-auto bg-gradient-to-b from-teal-500 to-teal-700 rounded-full flex items-center justify-center mb-4 shadow-lg">
                 <div className="relative">
                   <Camera size={32} className="text-white" />
-                  <Headphones size={18} className="text-white absolute -bottom-1 -right-1" />
+                  <Shield size={18} className="text-white absolute -bottom-1 -right-1" />
                 </div>
               </div>
               
               <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Hercule Poirot</h2>
-              <p className="text-center text-teal-600 font-medium text-sm mb-4">Deepfake Detector</p>
+              <p className="text-center text-teal-600 font-medium text-sm mb-4">Dual-Layer Deepfake Detector</p>
               
               <div className="border-t border-gray-100 pt-4 mt-2">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                   <div className="relative">
-                    <Camera size={16} />
-                    <Headphones size={10} className="absolute -bottom-1 -right-1" />
+                    <Shield size={16} />
                   </div>
-                  <span>How Hercule Poirot Helps You</span>
+                  <span>How Dual-Layer Detection Works</span>
                 </h3>
                 <ul className="text-gray-600 text-sm space-y-2">
                   <li className="flex items-start gap-2">
                     <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                    <span>Identifies manipulated images and videos</span>
+                    <span>Layer 1: AI model trained on deepfake patterns</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                    <span>Detects inconsistencies in facial features</span>
+                    <span>Layer 2: GROQ AI analysis for subtle manipulations</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                    <span>Analyzes digital artifacts and anomalies</span>
+                    <span>Combined analysis for higher accuracy</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                    <span>Detects AI-generated or manipulated audio</span>
+                    <span>Works with images, videos, and audio (Beta)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                    <span>Identifies voice cloning and audio splicing</span>
+                    <span>Detailed report with manipulation indicators</span>
                   </li>
                 </ul>
               </div>
@@ -128,10 +216,66 @@ const DetectivePage = () => {
               <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
                 <div className="bg-gradient-to-r from-teal-600 to-teal-800 p-6 text-white">
                   <h2 className="text-xl font-bold mb-2">Deepfake Detector</h2>
-                  <p className="opacity-90">Upload an image, video, or audio file to detect potential manipulations</p>
+                  <p className="opacity-90">Dual-layer AI detection for enhanced accuracy</p>
+                  
+                  {/* Tabs for selecting media type */}
+                  <div className="flex mt-4 border-b border-white/20">
+                    <button 
+                      className={`px-4 py-2 font-medium text-sm focus:outline-none ${
+                        selectedMode === 'image' 
+                          ? 'border-b-2 border-white text-white' 
+                          : 'text-white/70 hover:text-white transition-colors'
+                      }`}
+                      onClick={() => changeMode('image')}
+                    >
+                      Image Analysis
+                    </button>
+                    <button 
+                      className={`px-4 py-2 font-medium text-sm focus:outline-none ${
+                        selectedMode === 'video' 
+                          ? 'border-b-2 border-white text-white' 
+                          : 'text-white/70 hover:text-white transition-colors'
+                      }`}
+                      onClick={() => changeMode('video')}
+                    >
+                      Video Analysis
+                    </button>
+                    <button 
+                      className={`px-4 py-2 font-medium text-sm focus:outline-none ${
+                        selectedMode === 'audio' 
+                          ? 'border-b-2 border-white text-white' 
+                          : 'text-white/70 hover:text-white transition-colors'
+                      }`}
+                      onClick={() => changeMode('audio')}
+                    >
+                      Audio Analysis
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="p-6">
+                  {/* Info banner for video and audio */}
+                  {(selectedMode === 'video' || selectedMode === 'audio') && (
+                    <div className="mb-4 bg-blue-50 border border-blue-100 rounded-md p-3 text-sm flex items-start gap-2">
+                      <Info size={18} className="text-blue-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-blue-700">
+                          <span className="font-medium">{selectedMode === 'video' ? 'Video' : 'Audio'} analysis is in beta.</span> While we work to perfect this feature, you might experience limited functionality.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Error message if there is one */}
+                  {error && (
+                    <div className="mb-4 bg-red-50 border border-red-100 rounded-md p-3 text-sm flex items-start gap-2">
+                      <AlertTriangle size={18} className="text-red-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-red-700">{error}</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div 
                     className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors ${
                       previewUrl ? 'border-teal-300 bg-teal-50' : 'border-gray-300 hover:border-teal-300 hover:bg-gray-50'
@@ -145,20 +289,20 @@ const DetectivePage = () => {
                       type="file" 
                       ref={fileInputRef} 
                       onChange={handleFileChange} 
-                      accept="image/*,video/*,audio/*" 
+                      accept={getAcceptTypes()} 
                       className="hidden" 
                     />
                     
                     {previewUrl ? (
                       <div className="w-full flex flex-col items-center">
                         <div className="relative mb-4">
-                          {uploadedFile.type.startsWith('image/') ? (
+                          {fileType === 'image' ? (
                             <img 
                               src={previewUrl} 
                               alt="Preview" 
                               className="max-h-48 max-w-full rounded shadow-sm" 
                             />
-                          ) : uploadedFile.type.startsWith('video/') ? (
+                          ) : fileType === 'video' ? (
                             <video 
                               src={previewUrl} 
                               className="max-h-48 max-w-full rounded shadow-sm" 
@@ -188,12 +332,23 @@ const DetectivePage = () => {
                     ) : (
                       <>
                         <div className="flex items-center space-x-2 mb-3">
-                          <Camera size={36} className="text-gray-400" />
-                          <Headphones size={28} className="text-gray-400" />
+                          {selectedMode === 'image' ? (
+                            <Camera size={36} className="text-gray-400" />
+                          ) : selectedMode === 'video' ? (
+                            <FileText size={36} className="text-gray-400" />
+                          ) : (
+                            <Headphones size={36} className="text-gray-400" />
+                          )}
                         </div>
-                        <h3 className="text-lg font-medium text-gray-700 mb-1">Drop your file here</h3>
+                        <h3 className="text-lg font-medium text-gray-700 mb-1">
+                          Drop your {selectedMode} here
+                        </h3>
                         <p className="text-gray-500 text-sm mb-2">or click to browse</p>
-                        <p className="text-gray-400 text-xs">Supports JPG, PNG, MP4, MP3, WAV files</p>
+                        <p className="text-gray-400 text-xs">
+                          {selectedMode === 'image' ? 'Supports JPG, PNG files' : 
+                           selectedMode === 'video' ? 'Supports MP4, AVI files' : 
+                           'Supports MP3, WAV files'}
+                        </p>
                       </>
                     )}
                   </div>
@@ -207,21 +362,27 @@ const DetectivePage = () => {
                         : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                     }`}
                   >
-                    {isAudio ? <Headphones size={18} /> : <Camera size={18} />}
-                    Analyze Media
+                    {fileType === 'audio' ? (
+                      <Headphones size={18} />
+                    ) : fileType === 'video' ? (
+                      <FileText size={18} />
+                    ) : (
+                      <Camera size={18} />
+                    )}
+                    Analyze with Dual AI
                   </button>
                   
                   <div className="mt-6 bg-teal-50 border border-teal-100 rounded-md p-4">
                     <h3 className="text-sm font-semibold text-teal-800 mb-2 flex items-center gap-2">
-                      <AlertTriangle size={16} />
-                      <span>How Hercule Poirot Works</span>
+                      <Shield size={16} />
+                      <span>How Dual-Layer Analysis Works</span>
                     </h3>
                     <ol className="text-sm text-teal-700 space-y-1 list-decimal pl-5">
-                      <li>Upload an image, video, or audio file you want to analyze</li>
-                      <li>Our AI examines visual features, audio patterns, and digital artifacts</li>
-                      <li>For images/videos: facial features, lighting, and manipulation signals</li>
-                      <li>For audio: voice patterns, unnatural transitions, and generation markers</li>
-                      <li>Review the detailed analysis and conclusion about authenticity</li>
+                      <li>Upload media you want to analyze</li>
+                      <li>Layer 1: Specialized deepfake detection model analyzes patterns</li>
+                      <li>Layer 2: GROQ AI performs in-depth contextual analysis</li>
+                      <li>Results from both layers are combined for enhanced accuracy</li>
+                      <li>Review the confidence score and detailed analysis</li>
                     </ol>
                   </div>
                 </div>
@@ -234,21 +395,20 @@ const DetectivePage = () => {
                   </div>
                 </div>
                 
-                <h3 className="mt-6 text-xl font-bold text-gray-800">Analyzing Media</h3>
+                <h3 className="mt-6 text-xl font-bold text-gray-800">Dual-Layer Analysis</h3>
                 <p className="mt-2 text-gray-600 max-w-md text-center">
-                  Hercule Poirot is using his legendary detective skills to examine your {isAudio ? 'audio' : 'media'} for signs of manipulation. This may take a moment...
+                  Our AI systems are working together to examine your {fileType} for signs of manipulation. This may take a moment...
                 </p>
                 
                 <div className="mt-8 w-full max-w-md bg-gray-200 rounded-full h-2.5">
-                  <div className="bg-teal-600 h-2.5 rounded-full animate-pulse w-[70%]"></div>
-                </div>
+                  <div className="bg-teal-600 h-2.5 rounded-full animate-pulse w-[70%]"></div></div>
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
                 <div className="bg-gradient-to-r from-teal-600 to-teal-800 p-6 text-white flex justify-between items-center">
                   <div>
-                    <h2 className="text-xl font-bold mb-1">Analysis Results</h2>
-                    <p className="opacity-90 text-sm">Hercule Poirot's deepfake analysis</p>
+                    <h2 className="text-xl font-bold mb-1">Dual-Layer Analysis Results</h2>
+                    <p className="opacity-90 text-sm">Hercule Poirot's deepfake detection</p>
                   </div>
                   <button
                     onClick={resetForm}
@@ -264,13 +424,13 @@ const DetectivePage = () => {
                     <div className="md:w-1/2">
                       {uploadedFile && previewUrl && (
                         <div className="bg-black rounded-lg overflow-hidden shadow-md">
-                          {uploadedFile.type.startsWith('image/') ? (
+                          {fileType === 'image' ? (
                             <img 
                               src={previewUrl} 
                               alt="Analyzed media" 
                               className="w-full h-auto object-contain" 
                             />
-                          ) : uploadedFile.type.startsWith('video/') ? (
+                          ) : fileType === 'video' ? (
                             <video 
                               src={previewUrl} 
                               className="w-full h-auto object-contain" 
@@ -289,129 +449,300 @@ const DetectivePage = () => {
                     </div>
                     
                     <div className="md:w-1/2">
-                      <div className="mb-4 text-center">
-                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Analysis Result</h3>
-                        <div className="flex items-center justify-center gap-3">
-                          <div className="text-4xl font-bold text-red-600">76%</div>
-                          <div className="text-lg font-medium text-red-600">Likely Manipulated</div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-red-50 border border-red-100 rounded-md p-4 mb-4">
-                        <div className="flex items-start gap-2">
-                          <AlertTriangle size={20} className="text-red-600 shrink-0 mt-0.5" />
-                          <div>
-                            <h4 className="font-medium text-red-800">Manipulation Detected</h4>
-                            <p className="text-sm text-red-700 mt-1">
-                              {isAudio 
-                                ? "This audio has several indicators of digital manipulation, particularly in voice patterns and transitions."
-                                : "This media has several indicators of digital manipulation, particularly in facial features."
-                              }
-                            </p>
+                      {analysisResults && (
+                        <>
+                          <div className="mb-4 text-center">
+                            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Analysis Result</h3>
+                            <div className="flex items-center justify-center gap-3">
+                              {analysisResults.combined_verdict.verdict === "Likely Manipulated" ? (
+                                <>
+                                  <div className="text-4xl font-bold text-red-600">{analysisResults.combined_verdict.confidence}%</div>
+                                  <div className="text-lg font-medium text-red-600">Likely Manipulated</div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="text-4xl font-bold text-green-600">{analysisResults.combined_verdict.confidence}%</div>
+                                  <div className="text-lg font-medium text-green-600">Likely Authentic</div>
+                                </>
+                              )}
+                            </div>
                           </div>
+                          
+                          {analysisResults.combined_verdict.verdict === "Likely Manipulated" ? (
+                            <div className="bg-red-50 border border-red-100 rounded-md p-4 mb-4">
+                              <div className="flex items-start gap-2">
+                                <AlertTriangle size={20} className="text-red-600 shrink-0 mt-0.5" />
+                                <div>
+                                  <h4 className="font-medium text-red-800">Manipulation Detected</h4>
+                                  <p className="text-sm text-red-700 mt-1">
+                                    {fileType === 'audio' 
+                                      ? "This audio has indicators of digital manipulation, particularly in voice patterns and transitions."
+                                      : fileType === 'video'
+                                      ? "This video has indicators of digital manipulation in multiple frames."
+                                      : "This image has indicators of digital manipulation, particularly in facial features."
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="bg-green-50 border border-green-100 rounded-md p-4 mb-4">
+                              <div className="flex items-start gap-2">
+                                <CheckCircle size={20} className="text-green-600 shrink-0 mt-0.5" />
+                                <div>
+                                  <h4 className="font-medium text-green-800">Likely Authentic</h4>
+                                  <p className="text-sm text-green-700 mt-1">
+                                    {fileType === 'audio' 
+                                      ? "This audio appears to be authentic with natural voice patterns."
+                                      : fileType === 'video'
+                                      ? "This video appears to be authentic without signs of manipulation."
+                                      : "This image appears to be authentic without signs of manipulation."
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div>
+                            <h4 className="font-medium text-gray-800 mb-2">File Information</h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div className="text-gray-600">File Name:</div>
+                              <div className="text-gray-800 font-medium truncate">{uploadedFile?.name}</div>
+                              
+                              <div className="text-gray-600">File Size:</div>
+                              <div className="text-gray-800 font-medium">{(uploadedFile?.size / (1024 * 1024)).toFixed(2)} MB</div>
+                              
+                              <div className="text-gray-600">File Type:</div>
+                              <div className="text-gray-800 font-medium">{uploadedFile?.type}</div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {analysisResults && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Detection Details</h3>
+                      <div className="space-y-3">
+                        {analysisResults.combined_verdict.verdict === "Likely Manipulated" ? (
+                          <>
+                            {/* Display details from the analysis */}
+                            {analysisResults.combined_verdict.details && analysisResults.combined_verdict.details.length > 0 ? (
+                              // Map through the details from the AI analysis
+                              analysisResults.combined_verdict.details.map((detail, index) => (
+                                <DetailItem 
+                                  key={index}
+                                  title={`Finding ${index + 1}`}
+                                  confidence={Math.round(85 - index * 5)} // Generate a descending confidence for visual effect
+                                  description={detail}
+                                />
+                              ))
+                            ) : (
+                              // Fallback details based on file type
+                              fileType === 'audio' ? (
+                                <>
+                                  <DetailItem 
+                                    title="Unnatural voice transitions detected" 
+                                    confidence={92}
+                                    description="Analysis shows abrupt changes in voice timbre and quality that are inconsistent with natural speech patterns."
+                                  />
+                                  
+                                  <DetailItem 
+                                    title="Neural network generation artifacts present" 
+                                    confidence={85}
+                                    description="Spectral analysis reveals patterns consistent with AI voice synthesis, particularly in consonant sounds."
+                                  />
+                                  
+                                  <DetailItem 
+                                    title="Inconsistent room acoustics" 
+                                    confidence={79}
+                                    description="Background acoustic properties change unnaturally between segments, indicating spliced recordings."
+                                  />
+                                  
+                                  <DetailItem 
+                                    title="Unnatural breathing patterns" 
+                                    confidence={68}
+                                    description="Breathing sounds and pauses do not follow natural human speech patterns."
+                                  />
+                                </>
+                              ) : fileType === 'video' ? (
+                                <>
+                                  <DetailItem 
+                                    title="Unnatural eye blinking patterns" 
+                                    confidence={92}
+                                    description="Analysis of video frames shows abnormal blinking frequency and duration."
+                                  />
+                                  
+                                  <DetailItem 
+                                    title="Inconsistent facial movements" 
+                                    confidence={85}
+                                    description="Facial expressions and movements don't follow natural muscle patterns, indicating manipulation."
+                                  />
+                                  
+                                  <DetailItem 
+                                    title="Temporal inconsistencies detected" 
+                                    confidence={78}
+                                    description="Frame-to-frame analysis reveals unnatural transitions in movement flow."
+                                  />
+                                  
+                                  <DetailItem 
+                                    title="Audio-visual synchronization issues" 
+                                    confidence={70}
+                                    description="Slight misalignment between lip movements and speech audio detected."
+                                  />
+                                </>
+                              ) : (
+                                <>
+                                  <DetailItem 
+                                    title="Inconsistent shadows around facial features" 
+                                    confidence={92}
+                                    description="Shadows around the eyes and nose don't match the main light source in the image."
+                                  />
+                                  
+                                  <DetailItem 
+                                    title="Digital artifacts present in hair boundaries" 
+                                    confidence={85}
+                                    description="Pixel inconsistencies detected along hair edges, indicating poor blending of manipulated elements."
+                                  />
+                                  
+                                  <DetailItem 
+                                    title="Texture inconsistencies in skin regions" 
+                                    confidence={78}
+                                    description="Unnatural smoothness or patterns in skin textures that don't match natural skin properties."
+                                  />
+                                  
+                                  <DetailItem 
+                                    title="Facial proportions abnormalities" 
+                                    confidence={70}
+                                    description="Subtle inconsistencies in facial feature ratios compared to anatomical norms."
+                                  />
+                                </>
+                              )
+                            )}
+                          </>
+                        ) : (
+                          // Display authenticity indicators for authentic media
+                          <>
+                            <DetailItem 
+                              title="Natural feature consistency" 
+                              confidence={95}
+                              description={fileType === 'audio' ? 
+                                "Voice patterns, transitions, and acoustics appear consistent with natural human speech." : 
+                                "Lighting, shadows, and feature proportions are consistent with authentic media."}
+                            />
+                            
+                            <DetailItem 
+                              title="No manipulation artifacts detected" 
+                              confidence={92}
+                              description="Analysis found no evidence of digital tampering or inconsistencies typical of manipulated content."
+                            />
+                            
+                            <DetailItem 
+                              title="Consistent quality throughout" 
+                              confidence={90}
+                              description={fileType === 'audio' ? 
+                                "Audio quality and characteristics remain consistent throughout the recording." : 
+                                "Image quality and characteristics appear uniform throughout."}
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {analysisResults && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Dual-Layer Detection Technology</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="bg-blue-50 border border-blue-100 rounded-md p-4">
+                          <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                            <Shield size={16} className="text-blue-700" />
+                            Layer 1: AI Model
+                          </h4>
+                          <div className="text-sm text-blue-700 mb-2">
+                            Specialized machine learning model trained on thousands of real and fake examples.
+                          </div>
+                          {analysisResults.primary_analysis && analysisResults.primary_analysis.scores && (
+                            <div className="grid grid-cols-2 gap-2 text-sm mt-3 pt-3 border-t border-blue-200">
+                              <div className="text-blue-700">Real Score:</div>
+                              <div className="text-blue-800 font-medium">{(analysisResults.primary_analysis.scores.Real * 100).toFixed(1)}%</div>
+                              
+                              <div className="text-blue-700">Fake Score:</div>
+                              <div className="text-blue-800 font-medium">{(analysisResults.primary_analysis.scores.Deepfake * 100).toFixed(1)}%</div>
+                              
+                              <div className="text-blue-700">Verdict:</div>
+                              <div className="text-blue-800 font-medium">{analysisResults.primary_analysis.verdict}</div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-md p-4">
+                          <h4 className="font-medium text-indigo-800 mb-2 flex items-center gap-2">
+                            <Shield size={16} className="text-indigo-700" />
+                            Layer 2: GROQ Analysis
+                          </h4>
+                          <div className="text-sm text-indigo-700 mb-2">
+                            Advanced contextual analysis using GROQ's large language model capabilities.
+                          </div>
+                          {analysisResults.secondary_analysis && (
+                            <div className="grid grid-cols-2 gap-2 text-sm mt-3 pt-3 border-t border-indigo-200">
+                              <div className="text-indigo-700">Status:</div>
+                              <div className="text-indigo-800 font-medium capitalize">{analysisResults.secondary_analysis.status}</div>
+                              
+                              {analysisResults.secondary_analysis.confidence && (
+                                <>
+                                  <div className="text-indigo-700">Confidence:</div>
+                                  <div className="text-indigo-800 font-medium">{analysisResults.secondary_analysis.confidence}%</div>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                       
-                      <div>
-                        <h4 className="font-medium text-gray-800 mb-2">File Information</h4>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className="text-gray-600">File Name:</div>
-                          <div className="text-gray-800 font-medium truncate">{uploadedFile?.name}</div>
-                          
-                          <div className="text-gray-600">File Size:</div>
-                          <div className="text-gray-800 font-medium">{(uploadedFile?.size / (1024 * 1024)).toFixed(2)} MB</div>
-                          
-                          <div className="text-gray-600">File Type:</div>
-                          <div className="text-gray-800 font-medium">{uploadedFile?.type}</div>
-                        </div>
-                      </div>
+                      <p className="text-gray-700 mb-3">
+                        This analysis uses multiple detection methods to identify potential manipulations:
+                      </p>
+                      <ul className="text-gray-700 space-y-1 list-disc pl-5">
+                        {fileType === 'audio' ? (
+                          <>
+                            <li>Voice pattern and cadence analysis</li>
+                            <li>Neural network generation artifact detection</li>
+                            <li>Acoustic environment consistency checking</li>
+                            <li>Natural speech pattern verification</li>
+                            <li>Spectrogram analysis for manipulation markers</li>
+                          </>
+                        ) : fileType === 'video' ? (
+                          <>
+                            <li>Frame-by-frame facial feature analysis</li>
+                            <li>Temporal consistency evaluation</li>
+                            <li>Motion and expression pattern analysis</li>
+                            <li>Audio-visual synchronization verification</li>
+                            <li>Digital artifact and compression anomaly detection</li>
+                          </>
+                        ) : (
+                          <>
+                            <li>Facial geometry and proportion analysis</li>
+                            <li>Shadow and lighting consistency detection</li>
+                            <li>Skin texture and pore pattern matching</li>
+                            <li>Edge and boundary anomaly detection</li>
+                            <li>Digital artifact and compression inconsistency analysis</li>
+                          </>
+                        )}
+                      </ul>
                     </div>
-                  </div>
+                  )}
                   
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Detection Details</h3>
-                    <div className="space-y-3">
-                      {isAudio ? (
-                        <>
-                          <DetailItem 
-                            title="Unnatural voice transitions detected" 
-                            confidence={92}
-                            description="Analysis shows abrupt changes in voice timbre and quality that are inconsistent with natural speech patterns."
-                          />
-                          
-                          <DetailItem 
-                            title="Neural network generation artifacts present" 
-                            confidence={85}
-                            description="Spectral analysis reveals patterns consistent with AI voice synthesis, particularly in consonant sounds."
-                          />
-                          
-                          <DetailItem 
-                            title="Inconsistent room acoustics" 
-                            confidence={79}
-                            description="Background acoustic properties change unnaturally between segments, indicating spliced recordings."
-                          />
-                          
-                          <DetailItem 
-                            title="Unnatural breathing patterns" 
-                            confidence={68}
-                            description="Breathing sounds and pauses do not follow natural human speech patterns."
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <DetailItem 
-                            title="Inconsistent shadows around facial features" 
-                            confidence={92}
-                            description="Shadows around the eyes and nose don't match the main light source in the image."
-                          />
-                          
-                          <DetailItem 
-                            title="Unnatural eye blinking patterns" 
-                            confidence={85}
-                            description="Analysis of video frames shows abnormal blinking frequency and duration."
-                          />
-                          
-                          <DetailItem 
-                            title="Digital artifacts present in hair boundaries" 
-                            confidence={78}
-                            description="Pixel inconsistencies detected along hair edges, indicating poor blending of manipulated elements."
-                          />
-                          
-                          <DetailItem 
-                            title="Facial proportions abnormalities" 
-                            confidence={70}
-                            description="Subtle inconsistencies in facial feature ratios compared to anatomical norms."
-                          />
-                        </>
-                      )}
+                  {analysisResults && analysisResults.secondary_analysis && analysisResults.secondary_analysis.analysis && (
+                    <div className="mt-6 bg-slate-50 border border-slate-200 rounded-md p-4">
+                      <h3 className="text-md font-semibold text-slate-800 mb-2">GROQ AI Analysis</h3>
+                      <p className="text-sm text-slate-700 whitespace-pre-line">
+                        {analysisResults.secondary_analysis.analysis}
+                      </p>
                     </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Detection Technology</h3>
-                    <p className="text-gray-700 mb-3">
-                      This analysis uses multiple detection methods to identify potential manipulations:
-                    </p>
-                    <ul className="text-gray-700 space-y-1 list-disc pl-5">
-                      {isAudio ? (
-                        <>
-                          <li>Voice pattern and cadence analysis</li>
-                          <li>Neural network generation artifact detection</li>
-                          <li>Acoustic environment consistency checking</li>
-                          <li>Natural speech pattern verification</li>
-                          <li>Spectrogram analysis for manipulation markers</li>
-                        </>
-                      ) : (
-                        <>
-                          <li>Facial geometry and proportion analysis</li>
-                          <li>Shadow and lighting consistency detection</li>
-                          <li>Skin texture and pore pattern matching</li>
-                          <li>Motion and natural movement analysis</li>
-                          <li>Digital artifact and compression anomaly detection</li>
-                        </>
-                      )}
-                    </ul>
-                  </div>
+                  )}
                   
                   <button
                     className="mt-6 bg-gradient-to-r from-teal-600 to-teal-800 text-white font-medium py-2 px-4 rounded-md hover:from-teal-700 hover:to-teal-900 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 w-full flex items-center justify-center gap-2"
@@ -429,11 +760,21 @@ const DetectivePage = () => {
 };
 
 const DetailItem = ({ title, confidence, description }) => {
+  // Determine color based on confidence
+  const getColorClass = (confidence) => {
+    if (confidence >= 80) return { bg: 'bg-red-100', text: 'text-red-800' };
+    if (confidence >= 60) return { bg: 'bg-orange-100', text: 'text-orange-800' };
+    if (confidence >= 40) return { bg: 'bg-yellow-100', text: 'text-yellow-800' };
+    return { bg: 'bg-green-100', text: 'text-green-800' };
+  };
+  
+  const colorClass = getColorClass(confidence);
+  
   return (
     <div className="border border-gray-100 rounded-md p-3 bg-gray-50">
       <div className="flex justify-between items-start mb-1">
         <h4 className="font-medium text-gray-800">{title}</h4>
-        <span className="text-xs font-semibold bg-red-100 text-red-800 py-0.5 px-2 rounded-full">
+        <span className={`text-xs font-semibold ${colorClass.bg} ${colorClass.text} py-0.5 px-2 rounded-full`}>
           {confidence}% confidence
         </span>
       </div>

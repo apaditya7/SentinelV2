@@ -1,9 +1,15 @@
 {
     "manifest_version": 3,
     "name": "Sentinel AI",
-    "version": "1.2",
-    "description": "A modernized YouTube Fact Checker",
-    "permissions": ["storage", "activeTab", "scripting"],
+    "version": "1.3",
+    "description": "A fact-checking and misinformation detection tool",
+    "permissions": [
+        "storage", 
+        "activeTab", 
+        "scripting", 
+        "contextMenus",
+        "tabs"
+    ],
     "host_permissions": ["<all_urls>"],
     "action": {
         "default_popup": "popup.html",
@@ -24,8 +30,8 @@
     ],
     "web_accessible_resources": [
         {
-            "resources": ["reading-files-batman.gif", "images/*", "styles.css"],
-            "matches": ["*://*/*"]
+            "resources": ["reading-files-batman.gif", "images/*", "styles.css", "popup.html"],
+            "matches": ["<all_urls>"]
         }
     ]
 }

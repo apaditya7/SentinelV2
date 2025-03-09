@@ -14,10 +14,9 @@ import time
 from urllib.parse import quote_plus
 
 # API Keys
-OPENAI_API_KEY = ""
 GROQ_API_KEY = "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"
 GOOGLE_FACT_CHECK_API_KEY = "AIzaSyC4hRxckC42eHqRW_Zci60-OzL4JE60AwA"
-SERPER_API_KEY = ""
+SERPER_API_KEY = "2e11739723e5c6dee0dd9d26547c5de74f00ad03"
 
 # System prompt for extracting claims from transcript with context
 EXTRACT_CLAIMS_PROMPT = """
@@ -707,6 +706,82 @@ def check_facts():
     print(f"✅ Analysis complete, sending response")
     return jsonify(verified_claims)
 
+# Add these endpoints to server1.py just before the if __name__ == "__main__" line
+
+@app.route("/download-audio", methods=["POST"])
+def download_audio_endpoint():
+    """Endpoint for receiving and saving audio files"""
+    try:
+        # Check if the POST request has the file part
+        if 'file' not in request.files:
+            return jsonify({"error": "No file part in the request", "success": False}), 400
+        
+        file = request.files['file']
+        
+        # If user does not select a file, browser might submit an empty file
+        if file.filename == '':
+            return jsonify({"error": "No selected file", "success": False}), 400
+        
+        # Generate a unique filename to prevent collisions
+        filename = f"recording_{int(time.time())}.wav"
+        file_path = os.path.join(os.getcwd(), filename)
+        
+        # Save the file
+        file.save(file_path)
+        
+        print(f"✅ Audio file saved: {file_path}")
+        
+        return jsonify({
+            "success": True,
+            "message": "File uploaded successfully",
+            "filename": filename
+        })
+    
+    except Exception as e:
+        print(f"❌ Error downloading audio: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e), "success": False}), 500
+
+@app.route("/transcribe-audio-file", methods=["POST"])
+def transcribe_audio_file_endpoint():
+    """Endpoint for transcribing a saved audio file using Whisper"""
+    try:
+        data = request.json
+        
+        if not data or 'filename' not in data:
+            return jsonify({"error": "No filename provided", "success": False}), 400
+        
+        filename = data['filename']
+        file_path = os.path.join(os.getcwd(), filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({"error": f"File not found: {filename}", "success": False}), 404
+        
+        print(f"🎵 Transcribing audio file: {file_path}")
+        
+        # Transcribe the audio using the existing function
+        transcript = transcribe_audio(file_path)
+        
+        # Clean up the audio file
+        try:
+            os.remove(file_path)
+            print(f"🗑 Audio file {file_path} deleted")
+        except Exception as e:
+            print(f"⚠️ Could not delete audio file: {e}")
+        
+        if not transcript:
+            return jsonify({"error": "Failed to transcribe audio", "success": False}), 500
+        
+        return jsonify({
+            "success": True,
+            "transcript": transcript
+        })
+    
+    except Exception as e:
+        print(f"❌ Error transcribing audio: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e), "success": False}), 500
+    
 if __name__ == "__main__":
     print("🚀 Starting Context-Aware Fact-Checking Server - http://localhost:5001/")
     print("YouTube Analysis: /transcribe")

@@ -14,15 +14,57 @@ const SherlockPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [trustScore, setTrustScore] = useState(0);
   
+  // Real audio recording state
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
+  const audioBlobRef = useRef(null);
 
   // Speech-to-text state
-  const [transcriptionStatus, setTranscriptionStatus] = useState('idle'); // idle, processing, completed
+  const [transcriptionStatus, setTranscriptionStatus] = useState('idle'); // idle, processing, completed, error
   const [transcriptionText, setTranscriptionText] = useState('');
 
-  // Simulated recording function - doesn't actually access the microphone
-  const startRecording = () => {
-    // Start the fake recording
+  // Request permission to use microphone
+  const requestMicrophonePermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      return stream;
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      setErrorMessage(`Microphone access denied: ${err.message}`);
+      return null;
+    }
+  };
+
+  // Start real recording
+  const startRecording = async () => {
+    const stream = await requestMicrophonePermission();
+    if (!stream) return;
+
+    // Reset audio chunks
+    audioChunksRef.current = [];
+    
+    // Create media recorder
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder;
+    
+    // Set up data event handler
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunksRef.current.push(event.data);
+      }
+    };
+    
+    // Set up stop event handler
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+      audioBlobRef.current = audioBlob;
+      const url = URL.createObjectURL(audioBlob);
+      setAudioURL(url);
+    };
+    
+    // Start recording
+    mediaRecorder.start();
     setIsRecording(true);
     
     // Start the duration timer
@@ -32,24 +74,23 @@ const SherlockPage = () => {
     }, 1000);
   };
 
-  // Simulate stopping the recording
+  // Stop recording
   const stopRecording = () => {
-    if (isRecording) {
+    if (isRecording && mediaRecorderRef.current) {
       // Clear the timer
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
       
+      // Stop the media recorder
+      mediaRecorderRef.current.stop();
+      
+      // Stop all audio tracks in the stream
+      if (mediaRecorderRef.current.stream) {
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      }
+      
       setIsRecording(false);
-      
-      // Create a placeholder audio blob (not actual recording)
-      // In a real application, this would be the actual recorded audio
-      const placeholderBlob = new Blob(['placeholder audio data'], { type: 'audio/wav' });
-      const url = URL.createObjectURL(placeholderBlob);
-      setAudioURL(url);
-      
-      // Simulate speech-to-text processing
-      simulateTranscription();
     }
   };
 
@@ -60,29 +101,71 @@ const SherlockPage = () => {
     return `${mins}:${secs}`;
   };
 
-  // Simulate speech-to-text transcription without actual audio processing
-  const simulateTranscription = () => {
+  // Actually download and transcribe the audio using Whisper
+  const transcribeAudio = async () => {
+    if (!audioBlobRef.current) {
+      setErrorMessage("No audio recording available");
+      return;
+    }
+    
     setTranscriptionStatus('processing');
     
-    // Simulate processing time (2 seconds)
-    setTimeout(() => {
+    try {
+      // Create a unique filename
+      const filename = `recording_${Date.now()}.wav`;
+      
+      // Create a File object from the Blob
+      const audioFile = new File([audioBlobRef.current], filename, { type: 'audio/wav' });
+      
+      // Create a FormData object and append the file
+      const formData = new FormData();
+      formData.append('file', audioFile);
+      
+      // Make a POST request to a server endpoint that will download and save the file
+      const response = await fetch('http://localhost:5001/download-audio', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || "Failed to download audio file");
+      }
+      
+      // Now that the file is saved on the server, request transcription
+      const transcriptionResponse = await fetch('http://localhost:5001/transcribe-audio-file', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ filename: data.filename })
+      });
+      
+      if (!transcriptionResponse.ok) {
+        throw new Error(`Transcription error: ${transcriptionResponse.status}`);
+      }
+      
+      const transcriptionData = await transcriptionResponse.json();
+      
+      if (!transcriptionData.success) {
+        throw new Error(transcriptionData.error || "Failed to transcribe audio");
+      }
+      
+      // Set the transcription text
       setTranscriptionStatus('completed');
+      setTranscriptionText(transcriptionData.transcript);
+      setTextInput(transcriptionData.transcript); // Set as input for analysis
       
-      // For demo purposes, we'll use a sample transcription
-      const sampleTranscriptions = [
-        "The Earth is getting warmer due to human activities releasing greenhouse gases.",
-        "Vaccines have been extensively tested and are safe for the vast majority of people.",
-        "The Great Wall of China is visible from space with the naked eye.",
-        "COVID-19 originated in a laboratory in Wuhan, China."
-      ];
-      
-      // Pick a random transcription for demonstration
-      const randomTranscription = sampleTranscriptions[Math.floor(Math.random() * sampleTranscriptions.length)];
-      setTranscriptionText(randomTranscription);
-      
-      // Set the transcription to the text input
-      setTextInput(randomTranscription);
-    }, 2000);
+    } catch (error) {
+      console.error("Error transcribing audio:", error);
+      setTranscriptionStatus('error');
+      setErrorMessage(`Failed to transcribe audio: ${error.message}`);
+    }
   };
 
   // Reset audio recording
@@ -93,6 +176,7 @@ const SherlockPage = () => {
     setAudioURL(null);
     setTranscriptionStatus('idle');
     setTranscriptionText('');
+    audioBlobRef.current = null;
   };
 
   // Toggle recording panel visibility
@@ -218,14 +302,25 @@ const SherlockPage = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Clean up the timer
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      
+      // Clean up the audio URL
       if (audioURL) {
         URL.revokeObjectURL(audioURL);
       }
+      
+      // Stop recording if active
+      if (isRecording && mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+        if (mediaRecorderRef.current.stream) {
+          mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        }
+      }
     };
-  }, [audioURL]);
+  }, [audioURL, isRecording]);
 
   return (
     <div className="pt-24 pb-12">
@@ -365,11 +460,10 @@ const SherlockPage = () => {
                                   <div className="text-sm text-gray-500 mt-1">
                                     {formatTime(recordingDuration)}
                                   </div>
-                                  <p className="text-xs text-gray-400 mt-2">(Demo: No actual recording is taking place)</p>
                                 </div>
                               ) : (
                                 <p className="text-gray-500 text-sm">
-                                  Press the microphone button to simulate recording
+                                  Press the microphone button to start recording
                                 </p>
                               )}
                             </div>
@@ -377,10 +471,8 @@ const SherlockPage = () => {
                         ) : (
                           <div className="w-full mb-4">
                             <div className="bg-white p-3 rounded-md border border-gray-200 mb-3">
-                              {/* This audio element will display controls but won't actually play anything meaningful */}
                               <div className="flex flex-col items-center gap-2">
                                 <audio src={audioURL} controls className="w-full"></audio>
-                                <p className="text-xs text-gray-400">Demo placeholder audio (non-functional)</p>
                               </div>
                             </div>
                             
@@ -394,11 +486,16 @@ const SherlockPage = () => {
                               </button>
                               
                               <button
-                                onClick={() => startRecording()}
-                                className="flex-1 py-2 px-3 text-sm bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-md transition-colors flex items-center justify-center gap-2"
+                                onClick={transcribeAudio}
+                                disabled={transcriptionStatus === 'processing'}
+                                className={`flex-1 py-2 px-3 text-sm ${
+                                  transcriptionStatus === 'processing' 
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'
+                                } rounded-md transition-colors flex items-center justify-center gap-2`}
                               >
-                                <Mic size={16} />
-                                <span>Record Again</span>
+                                <FileText size={16} />
+                                <span>{transcriptionStatus === 'processing' ? 'Transcribing...' : 'Transcribe'}</span>
                               </button>
                             </div>
                           </div>
@@ -415,6 +512,9 @@ const SherlockPage = () => {
                               {transcriptionStatus === 'completed' && (
                                 <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Completed</span>
                               )}
+                              {transcriptionStatus === 'error' && (
+                                <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">Error</span>
+                              )}
                             </div>
                             
                             {transcriptionStatus === 'processing' ? (
@@ -423,6 +523,8 @@ const SherlockPage = () => {
                               </div>
                             ) : transcriptionStatus === 'completed' ? (
                               <p className="text-sm text-gray-700">{transcriptionText}</p>
+                            ) : transcriptionStatus === 'error' ? (
+                              <p className="text-sm text-red-600">Transcription failed. Please try again.</p>
                             ) : null}
                           </div>
                         )}
@@ -476,7 +578,7 @@ const SherlockPage = () => {
                     </h3>
                     <ol className="text-sm text-indigo-700 space-y-1 list-decimal pl-5">
                       <li>Enter text or record audio containing statements to verify</li>
-                      <li>For audio recordings, Sherlock will transcribe the content</li>
+                      <li>For audio recordings, use the transcription feature</li>
                       <li>Click "Verify Facts" to start Sherlock's analysis</li>
                       <li>Review the detailed fact check for each identified claim</li>
                       <li>Use the provided sources to learn more about each topic</li>

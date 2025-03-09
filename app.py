@@ -61,10 +61,10 @@ def analyze_audio():
     })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5010, debug=True)
 
 # Commands
 # python app.py
-# curl -X POST -F "audio=@test_audio_fake.wav" http://127.0.0.1:5000/analyze
-# curl -X POST -F "audio=@test_audio_real.mp3" http://127.0.0.1:5000/analyze
+# curl -X POST -F "audio=@test_audio_fake.wav" http://127.0.0.1:5010/analyze
+# curl -X POST -F "audio=@test_audio_real.mp3" http://127.0.0.1:5010/analyze
 
