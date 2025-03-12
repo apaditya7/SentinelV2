@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import joblib
 import numpy as np
 import librosa
 import os
 
 app = Flask(__name__)
+# Enable CORS for all routes
+CORS(app)
 
 # Load the model and scaler
 model_filename = "svm_model.pkl"
@@ -67,4 +70,3 @@ if __name__ == '__main__':
 # python app.py
 # curl -X POST -F "audio=@test_audio_fake.wav" http://127.0.0.1:5010/analyze
 # curl -X POST -F "audio=@test_audio_real.mp3" http://127.0.0.1:5010/analyze
-
