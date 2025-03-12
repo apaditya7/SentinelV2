@@ -10,7 +10,6 @@ import protest from './assets/protest.webp';
 
 
 
-
 function App() {
   // Game states
   const [gameState, setGameState] = React.useState('intro'); // intro, playing, results, tutorial
