@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { Shield, Search, FileText, Gavel, Headphones } from 'lucide-react';
+import { Shield, Search, FileText, Gavel, Headphones, BookOpen } from 'lucide-react';
 // Import images from assets folder
 import batmanSilhouette from '../assets/batman.png';
 import sherlockSilhouette from '../assets/sher.png';
 import poirotSilhouette from '../assets/poi.png';
 import harveySpecter from '../assets/harvey.png';
 import saulGoodman from '../assets/saul.png';
+import yodaSilhouette from '../assets/yoda.webp';
 
 const HomePage = () => {
   return (
@@ -44,7 +45,7 @@ const HomePage = () => {
             <div className="h-0.5 flex-grow ml-6 bg-gradient-to-r from-cyan-200 to-transparent"></div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <SentinelCard 
               name="Batman"
               role="YouTube Fact Checker"
@@ -78,6 +79,16 @@ const HomePage = () => {
               color="from-teal-500 to-teal-700"
               imageSrc={poirotSilhouette}
               link="/detective"
+            />
+
+            <SentinelCard 
+              name="Yoda"
+              role="Education Sentinel"
+              description="Learn about misinformation, you will. Through interactive games and software, he teachs you his ways."
+              icon={<BookOpen className="w-6 h-6 text-cyan-500" />}
+              color="from-green-500 to-green-700"
+              imageSrc={yodaSilhouette}
+              link="/yoda"
             />
           </div>
         </div>
