@@ -51,7 +51,6 @@ function App() {
             <Route path="/sherlock" element={<SherlockPage />} />
             <Route path="/detective" element={<DetectivePage />} />
             <Route path="/courtroom" element={<CourtroomPage />} />
-            /* <Route path="/yoda" element={<Main />} /> */
           </Routes>
         </main>
         <Footer />
