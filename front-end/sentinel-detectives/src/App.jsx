@@ -7,6 +7,7 @@ import BatmanPage from './pages/BatmanPage';
 import SherlockPage from './pages/SherlockPage';
 import DetectivePage from './pages/DetectivePage';
 import CourtroomPage from './pages/CourtroomPage';
+import Main from 'game1/src/main';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -50,6 +51,7 @@ function App() {
             <Route path="/sherlock" element={<SherlockPage />} />
             <Route path="/detective" element={<DetectivePage />} />
             <Route path="/courtroom" element={<CourtroomPage />} />
+            <Route path="/yoda" element={<Main />} />
           </Routes>
         </main>
         <Footer />
