@@ -47,6 +47,7 @@ const Navbar = () => {
           <NavLink to="/batman" label="Batman" icon={<Shield size={18} />} />
           <NavLink to="/sherlock" label="Sherlock" icon={<Search size={18} />} />
           <NavLink to="/detective" label="Poirot" icon={<FileText size={18} />} />
+          <NavLink to="/yoda" label = "Yoda" icon={<School size={18} />} />
           <NavLink to="/courtroom" label="Courtroom" icon={<Gavel size={18} />} />
         </div>
 
