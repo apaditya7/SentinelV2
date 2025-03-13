@@ -7,7 +7,6 @@ import BatmanPage from './pages/BatmanPage';
 import SherlockPage from './pages/SherlockPage';
 import DetectivePage from './pages/DetectivePage';
 import CourtroomPage from './pages/CourtroomPage';
-
 import YodaPage from './pages/YodaPage';
 
 
