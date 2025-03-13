@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Search, Shield, FileText, Gavel } from 'lucide-react';
+import { Menu, X, Home, Search, Shield, FileText, Gavel,School } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,6 +71,7 @@ const Navbar = () => {
           <MobileNavLink to="/batman" label="Batman" icon={<Shield size={20} />} />
           <MobileNavLink to="/sherlock" label="Sherlock" icon={<Search size={20} />} />
           <MobileNavLink to="/detective" label="Poirot" icon={<FileText size={20} />} />
+          <NavLink to="/yoda" label = "Yoda" icon={<School size={18} />} />
           <MobileNavLink to="/courtroom" label="Courtroom" icon={<Gavel size={20} />} />
         </div>
       </div>
